@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Thermoacoustic Instability — Demo 1: The Resonator</title>
+<title>Thermoacoustic Instability, Demo 1: The Resonator</title>
 <style>
   :root {
     --bg: #f7f5f0;
@@ -78,7 +78,7 @@
     accent-color: var(--accent-cool);
   }
 
-  #pluckButton {
+  #pulseButton {
     background: var(--accent-warm);
     color: white;
     border: none;
@@ -90,11 +90,11 @@
     transition: background 0.15s ease;
   }
 
-  #pluckButton:hover {
+  #pulseButton:hover {
     background: var(--accent-warm-dark);
   }
 
-  #pluckButton:active {
+  #pulseButton:active {
     transform: translateY(1px);
   }
 
@@ -112,21 +112,25 @@
   .caption strong {
     color: var(--accent-warm-dark);
   }
+
+  .swatch-warm { color: #b3401f; font-weight: 600; }
+  .swatch-cool { color: #3c7fb1; font-weight: 600; }
+  .swatch-sensor { color: #1f9254; font-weight: 600; }
 </style>
 </head>
 <body>
   <div id="app">
-    <h1>Demo 1 — The Resonator</h1>
-    <p class="subtitle">Drag the tube to pluck it. Watch how it rings, and how it always fades.</p>
+    <h1>Demo 1: The Resonator</h1>
+    <p class="subtitle">Pulse the chamber and watch the gas. The shading is local pressure, <span class="swatch-warm">warm where the gas is compressed</span> and <span class="swatch-cool">cool where it is rarefied</span>. The dark dots are gas parcels carried by the wave. The <span class="swatch-sensor">green dot</span> is a pressure sensor in the closed end wall; the graph below is its reading over time. It rings, and it always fades.</p>
     <div id="canvas-holder"></div>
     <div id="controls">
       <label for="chamberLengthSlider">Chamber length
         <input type="range" id="chamberLengthSlider" min="60" max="220" value="140" step="1">
       </label>
-      <button id="pluckButton">Pluck</button>
+      <button id="pulseButton">Pulse</button>
     </div>
     <p class="caption">
-      The chamber is a resonator — plucked, it rings at its own pitch and fades.
+      The chamber is a resonator: pulsed, it rings at its own pitch and fades.
       <strong>Something must pump it for a tone to last.</strong>
     </p>
   </div>
