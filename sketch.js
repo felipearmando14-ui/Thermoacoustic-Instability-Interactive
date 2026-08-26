@@ -110,6 +110,11 @@ const sketch = (p) => {
   const TRACE_TOP = 200;
   const TRACE_HEIGHT = 180;
 
+  // Sizes the trace caption may shrink through, largest first, so it always
+  // fits inside the panel. See drawTracePanel().
+  const CAPTION_TEXT_SIZES = [12, 11, 10];
+  const CAPTION_RIGHT_PADDING = 10;
+
   const COLOR_BACKGROUND = () => p.color('#f7f5f0');
   const COLOR_PANEL = () => p.color('#ffffff');
   const COLOR_INK = () => p.color('#23241f');
@@ -455,18 +460,20 @@ const sketch = (p) => {
   // chamber", which is the entire reason this demo is a Rijke tube and not the
   // closed duct it started as. (The flow itself is not modelled here.)
   function drawFlowArrows(tubeGeometry) {
-    const { tubeCenterX, tubeTopY, tubeBottomY } = tubeGeometry;
+    const { tubeCenterX, tubeRightX, tubeTopY, tubeBottomY } = tubeGeometry;
 
     drawUpwardArrow(tubeCenterX, tubeBottomY + 26, tubeBottomY + 8);
     drawUpwardArrow(tubeCenterX, tubeTopY - 8, tubeTopY - 26);
 
+    // Labels go to the right of the tube, into the empty gap before the trace
+    // panel. That side has room to grow; the left side runs out of canvas.
     p.noStroke();
     p.fill(COLOR_INK_SOFT());
     p.textFont(FONT_LABEL);
     p.textSize(11);
     p.textAlign(p.LEFT, p.CENTER);
-    p.text('air in', tubeCenterX + 14, tubeBottomY + 17);
-    p.text('air out', tubeCenterX + 14, tubeTopY - 17);
+    p.text('air in', tubeRightX + 12, tubeBottomY + 17);
+    p.text('air out', tubeRightX + 12, tubeTopY - 17);
   }
 
   function drawUpwardArrow(x, tailY, tipY) {
@@ -560,20 +567,33 @@ const sketch = (p) => {
   // -------------------------------------------------------------------------
 
   function drawTracePanel() {
+    // The white card the trace sits on. Derived once so the caption below can
+    // measure itself against the same edges the card is drawn to.
+    const panelLeft = TRACE_LEFT - 20;
+    const panelRight = TRACE_RIGHT + 20;
+    const captionLeft = TRACE_LEFT - 10;
+
     p.rectMode(p.CORNER);
     p.noStroke();
     p.fill(COLOR_PANEL());
-    p.rect(TRACE_LEFT - 20, TRACE_TOP - 24, (TRACE_RIGHT - TRACE_LEFT) + 40, TRACE_HEIGHT + 44, 6);
+    p.rect(panelLeft, TRACE_TOP - 24, panelRight - panelLeft, TRACE_HEIGHT + 44, 6);
 
     p.fill(COLOR_INK_SOFT());
     p.textFont(FONT_LABEL);
-    p.textSize(12);
     p.textAlign(p.LEFT, p.BOTTOM);
-    p.text(
-      `sensor pressure vs. time, measured at mid-height  (last ${TRACE_SECONDS}s)`,
-      TRACE_LEFT - 10,
-      TRACE_TOP - 8
-    );
+
+    // The caption must stay inside the card. Font metrics are the browser's to
+    // decide, not ours, so rather than trust a measurement made here we ask
+    // p5 how wide the string actually rendered and step the size down until it
+    // fits. Without this the caption silently runs off the panel edge the next
+    // time someone lengthens it or the page font changes.
+    const caption = `sensor pressure (mid-height), last ${TRACE_SECONDS}s`;
+    const captionMaxWidth = panelRight - captionLeft - CAPTION_RIGHT_PADDING;
+    for (const candidateSize of CAPTION_TEXT_SIZES) {
+      p.textSize(candidateSize);
+      if (p.textWidth(caption) <= captionMaxWidth) break;
+    }
+    p.text(caption, captionLeft, TRACE_TOP - 8);
 
     const zeroY = mapPressureToTraceY(0);
     p.stroke(220);
