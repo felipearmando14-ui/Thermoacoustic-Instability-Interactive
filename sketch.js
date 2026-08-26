@@ -1,13 +1,15 @@
 
 // Thermoacoustic Instability, Demo 1: The Resonator
 //
-// A combustion chamber's fundamental acoustic mode behaves, to first order,
-// like a single damped harmonic oscillator: pulse it and it rings at its own
-// natural pitch, then the ringing dies out. There is no heat release and no
-// flame here. That arrives in Demo 2, which will reuse `chamber.step()` and
-// simply add a heat-release drive term to pressureAcceleration.
+// The apparatus is a Rijke tube: a vertical pipe, open at both ends, with air
+// entering at the bottom and leaving at the top. Its fundamental acoustic mode
+// behaves, to first order, like a single damped harmonic oscillator: pulse it
+// and it rings at its own natural pitch, then the ringing dies out. There is no
+// mean flow, no heat release and no flame in this demo. Heat arrives in Demo 2,
+// which will reuse `chamber.step()` and simply add a heat-release drive term to
+// pressureAcceleration.
 //
-// The chamber is drawn as "Variant D" from the visualization study: a density
+// The gas is drawn as "Variant D" from the visualization study: a density
 // shading of local pressure, with a sparse layer of advected tracer particles
 // on top so the gas motion behind the shading stays visible.
 //
@@ -30,11 +32,21 @@ const sketch = (p) => {
   // settling back to rest.
   const DAMPING_COEFFICIENT = 0.6;
 
-  // Fixed physics timestep. We take several small substeps per rendered
-  // frame rather than one big step, which keeps the integrator stable even
-  // at the higher end of the natural-frequency range.
+  // Fixed physics timestep. The integrator always advances by exactly this
+  // much, however long the display takes to produce a frame; draw() runs as
+  // many of these steps as the elapsed wall-clock time has earned. Small
+  // enough to stay stable at the top of the natural-frequency range.
   const TIME_STEP = 1 / 240;
-  const SUBSTEPS_PER_FRAME = 4;
+
+  // The trace is sampled on its own clock, also independent of frame rate, so
+  // the plotted window is a true TRACE_SECONDS on a 60 Hz and a 120 Hz display
+  // alike.
+  const TRACE_SAMPLE_INTERVAL = 1 / 60; // seconds between trace samples
+
+  // A frame gap longer than this means the tab was backgrounded or the
+  // debugger was paused. Simulating it would fast-forward the ring-down in one
+  // jump, so we simply drop the missing time.
+  const MAX_FRAME_SECONDS = 0.1;
 
   // Pressure amplitude of a pulse, and the reference the shading saturates
   // against.
@@ -43,25 +55,31 @@ const sketch = (p) => {
   // Variant D rendering. Real acoustic displacements are microscopic, so the
   // tracer motion is pure exaggeration: this is how many pixels one unit of
   // pressure amplitude is worth at the peak of the swing.
-  const DISPLACEMENT_PIXELS_PER_PRESSURE = 2.0;
+  const DISPLACEMENT_PIXELS_PER_PRESSURE = 2.5;
   const TRACER_COUNT = 24;
-  const TRACER_DIAMETER = 7;
+  const TRACER_DIAMETER = 6;
   const SHADING_STRIP_COUNT = 200;
 
   // Where the pressure sensor is mounted, as a normalized position along the
-  // tube: 0 is the left closed end, 1 the right. A closed end is exactly
-  // where a real rig puts its pressure transducer: it is a pressure
-  // antinode, so it sees the largest signal the mode has to offer, while a
-  // probe at the center would sit on the node and read almost nothing.
-  const SENSOR_NORMALIZED_POSITION = 0;
+  // tube: 0 is the bottom (inlet), 1 the top (outlet). Mid-height is exactly
+  // where a real rig puts its pressure transducer: in an open-open tube the
+  // centre is the pressure antinode, so it sees the largest signal the mode
+  // has to offer, while a probe at either open end would sit on a node and
+  // read almost nothing.
+  const SENSOR_NORMALIZED_POSITION = 0.5;
   const SENSOR_DIAMETER = 12;
-  const SENSOR_VERTICAL_OFFSET = -40; // clear of the tracer row on the centerline
+  const SENSOR_HORIZONTAL_OFFSET = 16; // label sits this far outside the wall
+
+  // The heated gauze of a real Rijke tube, drawn a quarter of the way up.
+  // Inert here; see drawHeaterGauze() for why it is on screen at all.
+  const HEATER_NORMALIZED_POSITION = 0.25;
+  const HEATER_BAND_HEIGHT = 12;
 
   // Scrolling trace: fixed time window and fixed vertical scale.
   const TRACE_SECONDS = 7;
   const TRACE_MAX_PRESSURE = MAX_PRESSURE;
 
-  // Chamber length is driven by the HTML slider; these mirror its min/max.
+  // Tube length is driven by the HTML slider; these mirror its min/max.
   const CHAMBER_LENGTH_MIN = 60;
   const CHAMBER_LENGTH_MAX = 220;
 
@@ -70,20 +88,27 @@ const sketch = (p) => {
   // -------------------------------------------------------------------------
 
   const CANVAS_WIDTH = 860;
-  const CANVAS_HEIGHT = 520;
+  const CANVAS_HEIGHT = 620;
 
-  const TUBE_CENTER_Y = 165;
-  const TUBE_WALL_HEIGHT = 130;
+  // Tube occupies a left column; the trace panel sits to its right.
+  //
+  // The tube is anchored at its bottom: the length slider grows it upward, so
+  // TUBE_BOTTOM_Y is fixed and only the top end moves. The inlet therefore
+  // stays put on screen while the length changes, which is what makes the
+  // pitch change legible as "the tube got shorter" rather than "everything
+  // moved".
+  const TUBE_CENTER_X = 230;
+  const TUBE_BOTTOM_Y = 560;
+  const TUBE_WIDTH = 110;
   const TUBE_MIN_PIXEL_LENGTH = 260;
-  const TUBE_MAX_PIXEL_LENGTH = 680;
+  const TUBE_MAX_PIXEL_LENGTH = 470;
 
-  const LEGEND_ROW_ONE_Y = 268;
-  const LEGEND_ROW_TWO_Y = 290;
+  const LEGEND_Y = 597;
 
-  const TRACE_LEFT = 60;
-  const TRACE_RIGHT = CANVAS_WIDTH - 60;
-  const TRACE_TOP = 340;
-  const TRACE_HEIGHT = 150;
+  const TRACE_LEFT = 430;
+  const TRACE_RIGHT = 820;
+  const TRACE_TOP = 200;
+  const TRACE_HEIGHT = 180;
 
   const COLOR_BACKGROUND = () => p.color('#f7f5f0');
   const COLOR_PANEL = () => p.color('#ffffff');
@@ -92,17 +117,23 @@ const sketch = (p) => {
   const COLOR_WALL = () => p.color('#3a3b34');
   const COLOR_ACCENT_WARM = () => p.color('#d9762b');
 
+  // The gauze is drawn in a dim grey, not the warm accent, because it is off.
+  const COLOR_HEATER_OFF = () => p.color('#9a9a92');
+
   // The sensor and the trace it feeds share one colour, so the green dot on
-  // the wall and the green curve below read as the same instrument.
+  // the wall and the green curve beside it read as the same instrument.
   const COLOR_SENSOR = () => p.color('#1f9254');
   const COLOR_TRACE = () => COLOR_SENSOR();
 
-  // Variant D palette. Neutral is the gas at rest, so an un-pulsed chamber
+  // Variant D palette. Neutral is the gas at rest, so an un-pulsed tube
   // reads as "nothing happening" rather than as a colour.
   const COLOR_GAS_NEUTRAL = () => p.color('#f2efe9');
   const COLOR_COMPRESSION = () => p.color('#b3401f'); // warm: pressure above rest
   const COLOR_RAREFACTION = () => p.color('#4a90c4'); // cool: pressure below rest
   const COLOR_TRACER = () => p.color('#23241f');
+
+  const FONT_LABEL = 'Source Sans 3';
+  const FONT_MONO = 'IBM Plex Mono';
 
   // -------------------------------------------------------------------------
   // Chamber physics state
@@ -111,7 +142,6 @@ const sketch = (p) => {
   // step() as-is (or add a drive term to pressureAcceleration), and reuse
   // every rendering function below unchanged.
   // -------------------------------------------------------------------------
-
   const chamber = {
     pressure: 0,               // acoustic pressure, how "swollen" the standing wave is right now
     pressureVelocity: 0,       // rate of change of pressure
@@ -122,7 +152,7 @@ const sketch = (p) => {
     step(timeStep) {
       // Restoring force: the acoustic mode behaves like a spring, pulling
       // pressure back toward zero (rest) with a strength set by the
-      // chamber's natural frequency.
+      // tube's natural frequency.
       const restoringForce = -(this.angularFrequency * this.angularFrequency) * this.pressure;
 
       // Damping force: drains energy from the oscillation, proportional to
@@ -150,6 +180,12 @@ const sketch = (p) => {
   let pressureHistory = [];    // fixed-length ring buffer for the scrolling trace
   let tracerRestPositions = [];// normalized rest positions (0..1) of the Variant D tracers
 
+  // Leftover wall-clock time not yet consumed by a whole physics step or a
+  // whole trace sample. Carrying it across frames is what decouples both
+  // clocks from the display's refresh rate.
+  let physicsTimeAccumulator = 0;
+  let traceSampleAccumulator = 0;
+
   let chamberLengthSlider, pulseButton;
 
   // -------------------------------------------------------------------------
@@ -160,7 +196,7 @@ const sketch = (p) => {
     const canvas = p.createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
     canvas.parent('canvas-holder');
 
-    const traceSampleCount = Math.round(TRACE_SECONDS * 60); // ~60 frames/sec
+    const traceSampleCount = Math.round(TRACE_SECONDS / TRACE_SAMPLE_INTERVAL);
     pressureHistory = new Array(traceSampleCount).fill(0);
 
     for (let i = 0; i < TRACER_COUNT; i++) {
@@ -180,20 +216,34 @@ const sketch = (p) => {
   p.draw = () => {
     updateChamberFrequencyFromLength();
 
-    for (let substep = 0; substep < SUBSTEPS_PER_FRAME; substep++) {
+    // Advance both clocks by real elapsed time rather than by "one frame".
+    // On a 120 Hz display this runs half as many steps per frame and twice as
+    // many frames per second, so the ring-down takes the same number of
+    // seconds and the reported pitch is the pitch you actually see.
+    const elapsedSeconds = Math.min(p.deltaTime / 1000, MAX_FRAME_SECONDS);
+
+    physicsTimeAccumulator += elapsedSeconds;
+    while (physicsTimeAccumulator >= TIME_STEP) {
       chamber.step(TIME_STEP);
+      physicsTimeAccumulator -= TIME_STEP;
     }
 
     // The trace plots what the sensor sees, not the raw modal amplitude:
     // it samples the pressure field at the sensor's own position.
-    pressureHistory.push(localPressureAt(SENSOR_NORMALIZED_POSITION));
-    pressureHistory.shift();
+    traceSampleAccumulator += elapsedSeconds;
+    while (traceSampleAccumulator >= TRACE_SAMPLE_INTERVAL) {
+      pressureHistory.push(localPressureAt(SENSOR_NORMALIZED_POSITION));
+      pressureHistory.shift();
+      traceSampleAccumulator -= TRACE_SAMPLE_INTERVAL;
+    }
 
     p.background(COLOR_BACKGROUND());
     const tubeGeometry = getTubeGeometry();
     drawDensityShading(tubeGeometry);
+    drawHeaterGauze(tubeGeometry);
     drawTracerParticles(tubeGeometry);
     drawTube(tubeGeometry);
+    drawFlowArrows(tubeGeometry);
     drawSensor(tubeGeometry);
     drawColorLegend();
     drawFrequencyReadout();
@@ -215,24 +265,27 @@ const sketch = (p) => {
   }
 
   // -------------------------------------------------------------------------
-  // Mode shapes for the fundamental of a CLOSED-CLOSED chamber
+  // Mode shapes for the fundamental of an OPEN-OPEN tube
   //
-  // normalizedPosition runs 0..1 from the left wall to the right wall.
+  // normalizedPosition (u) runs 0..1 from the bottom inlet to the top outlet.
   // Pressure is the spatial derivative of displacement, which is why the two
   // peak in different places:
-  //   - displacement / velocity is pinned to zero at both rigid walls (the
-  //     gas cannot move through them) and is maximum at the center, where
-  //     the column is free to slosh back and forth.
-  //   - pressure is maximum at the walls, where the gas piles up against a
-  //     surface it cannot pass, and zero at the center, a pressure node
-  //     exactly where the displacement antinode sits.
+  //   - at an open end the gas is free to move but cannot sustain a pressure
+  //     difference against the outside atmosphere, so pressure is pinned to
+  //     zero there and displacement is maximum: the column sloshes in and out
+  //     of the opening.
+  //   - at the centre the gas is most constrained, squeezed between the
+  //     columns on either side, so pressure peaks there and displacement
+  //     passes through zero.
+  // This is the mirror image of a closed-closed duct, where the rigid walls
+  // pin displacement instead of pressure.
   // -------------------------------------------------------------------------
 
-  function displacementShape(normalizedPosition) {
+  function pressureShape(normalizedPosition) {
     return Math.sin(Math.PI * normalizedPosition);
   }
 
-  function pressureShape(normalizedPosition) {
+  function displacementShape(normalizedPosition) {
     return Math.cos(Math.PI * normalizedPosition);
   }
 
@@ -240,19 +293,31 @@ const sketch = (p) => {
   // Geometry
   // -------------------------------------------------------------------------
 
+  // Screen y grows downward while u grows upward, so every vertical position
+  // in the tube goes through this one inversion. Nothing else should do the
+  // arithmetic by hand.
+  function yForNormalizedPosition(u, tubeGeometry) {
+    return tubeGeometry.tubeBottomY - u * tubeGeometry.tubePixelLength;
+  }
+
   function getTubeGeometry() {
     const tubePixelLength = p.map(
       chamberLength,
       CHAMBER_LENGTH_MIN, CHAMBER_LENGTH_MAX,
       TUBE_MIN_PIXEL_LENGTH, TUBE_MAX_PIXEL_LENGTH
     );
-    const tubeLeftX = CANVAS_WIDTH / 2 - tubePixelLength / 2;
-    const tubeRightX = CANVAS_WIDTH / 2 + tubePixelLength / 2;
-    return { tubePixelLength, tubeLeftX, tubeRightX };
+    return {
+      tubePixelLength,
+      tubeBottomY: TUBE_BOTTOM_Y,
+      tubeTopY: TUBE_BOTTOM_Y - tubePixelLength,
+      tubeCenterX: TUBE_CENTER_X,
+      tubeLeftX: TUBE_CENTER_X - TUBE_WIDTH / 2,
+      tubeRightX: TUBE_CENTER_X + TUBE_WIDTH / 2
+    };
   }
 
   // -------------------------------------------------------------------------
-  // Rendering the chamber (Variant D: shading + tracer particles)
+  // Rendering the gas (Variant D: shading + tracer particles)
   // -------------------------------------------------------------------------
 
   // Local pressure at a point in the tube is the mode shape scaled by the
@@ -268,169 +333,226 @@ const sketch = (p) => {
     return p.lerpColor(COLOR_GAS_NEUTRAL(), target, intensity);
   }
 
+  // The field varies along the tube's axis, which is now vertical, so the
+  // shading is a stack of full-width horizontal bands rather than a row of
+  // vertical strips.
   function drawDensityShading(tubeGeometry) {
     const { tubeLeftX, tubePixelLength } = tubeGeometry;
-    const tubeTopY = TUBE_CENTER_Y - TUBE_WALL_HEIGHT / 2;
-    const stripWidth = tubePixelLength / SHADING_STRIP_COUNT + 1; // +1 avoids hairline seams
+    const bandHeight = tubePixelLength / SHADING_STRIP_COUNT + 1; // +1 avoids hairline seams
 
     p.rectMode(p.CORNER);
     p.noStroke();
     for (let i = 0; i < SHADING_STRIP_COUNT; i++) {
       const normalizedPosition = (i + 0.5) / SHADING_STRIP_COUNT;
       p.fill(pressureToShadingColor(localPressureAt(normalizedPosition)));
-      p.rect(tubeLeftX + (i / SHADING_STRIP_COUNT) * tubePixelLength, tubeTopY, stripWidth, TUBE_WALL_HEIGHT);
+      // Band i spans u from i/N to (i+1)/N; the upper edge of that span is the
+      // smaller screen y, so that is the rectangle's top.
+      const bandTopY = yForNormalizedPosition((i + 1) / SHADING_STRIP_COUNT, tubeGeometry);
+      p.rect(tubeLeftX, bandTopY, TUBE_WIDTH, bandHeight);
     }
+  }
+
+  // The heated gauze of a real Rijke tube, drawn a quarter of the way up.
+  //
+  // It is completely inert in this demo: no heat release, no coupling, nothing
+  // reads HEATER_NORMALIZED_POSITION except this function. It is on screen so
+  // that the apparatus stays visually identical across all four demos, and so
+  // that the object whose position becomes the central knob in Demo 4 is
+  // already familiar by the time it starts to matter. This is deliberate, not
+  // dead code left behind.
+  function drawHeaterGauze(tubeGeometry) {
+    const { tubeLeftX, tubeRightX } = tubeGeometry;
+    const centerY = yForNormalizedPosition(HEATER_NORMALIZED_POSITION, tubeGeometry);
+    const topY = centerY - HEATER_BAND_HEIGHT / 2;
+    const bottomY = centerY + HEATER_BAND_HEIGHT / 2;
+
+    // Cross-hatch: a gauze is a mesh, and the mesh reads as "an object in the
+    // flow" without the solid fill that would hide the shading behind it.
+    p.stroke(COLOR_HEATER_OFF());
+    p.strokeWeight(1);
+    p.line(tubeLeftX, topY, tubeRightX, topY);
+    p.line(tubeLeftX, bottomY, tubeRightX, bottomY);
+    for (let x = tubeLeftX; x <= tubeRightX - HEATER_BAND_HEIGHT; x += 8) {
+      p.line(x, bottomY, x + HEATER_BAND_HEIGHT, topY);
+      p.line(x, topY, x + HEATER_BAND_HEIGHT, bottomY);
+    }
+
+    p.noStroke();
+    p.fill(COLOR_HEATER_OFF());
+    p.textFont(FONT_LABEL);
+    p.textSize(11);
+    p.textAlign(p.RIGHT, p.CENTER);
+    p.text('heater — off', tubeLeftX - 10, centerY);
   }
 
   // Tracer displacement amplitude, in pixels.
   //
-  // pressureVelocity drives the offset (not pressure) so the tracers move
-  // fastest as the wave passes through zero pressure. Dividing by
-  // angularFrequency makes the swing track the wave's pressure amplitude
-  // rather than its pitch, so shortening the chamber raises the tone without
-  // silently enlarging the gas motion.
+  // Particle displacement is IN PHASE with pressure in a standing wave
+  // (velocity leads by a quarter cycle). Parcels sit at maximum excursion
+  // exactly when pressure peaks, which is what makes the crowding line up
+  // with the shading.
   //
-  // The result is capped at 0.9 * tubePixelLength / PI. A tracer at u has
-  // (1-u) * length of room before the far wall and moves amplitude*sin(PI*u);
-  // near the wall sin(PI*u) -> PI*(1-u), so the two balance exactly at
-  // amplitude = length / PI, the point where neighbouring tracers collide
-  // and the density formally diverges. Capping just below it keeps every
-  // tracer inside the closed chamber, and because it scales all of them by
-  // the same factor the sin(PI*u) mode shape is preserved.
+  // With displacement A*cos(PI*u), pressure goes like +A*sin(PI*u), while the
+  // shading paints pressure*sin(PI*u). Matching the two gives
+  // A = +gain * pressure. Read physically: when pressure is positive, parcels
+  // below the centre move up and parcels above it move down, converging on the
+  // middle, and converging gas is exactly the compression the shading paints
+  // warm there.
+  //
+  // The swing is capped so parcels do not pile through one another. Adjacent
+  // parcels sit (length - A*PI*sin(PI*u)) / N apart, so the tightest gap
+  // anywhere is (length - |A|*PI) / N; holding that at one parcel width plus a
+  // hair gives the limit below. The tight spot is now the centre rather than
+  // the ends, but the expression is unchanged. Scaling every parcel by the
+  // same factor preserves the cos(PI*u) shape.
   function tracerAmplitudePixels(tubePixelLength) {
-    const requestedAmplitude =
-      DISPLACEMENT_PIXELS_PER_PRESSURE * chamber.pressureVelocity / chamber.angularFrequency;
-    const maxAmplitude = 0.9 * tubePixelLength / Math.PI;
+    const requestedAmplitude = +DISPLACEMENT_PIXELS_PER_PRESSURE * chamber.pressure;
+    const minimumGapPixels = TRACER_DIAMETER + 2;
+    const maxAmplitude = Math.max(0, (tubePixelLength - TRACER_COUNT * minimumGapPixels) / Math.PI);
     return p.constrain(requestedAmplitude, -maxAmplitude, maxAmplitude);
   }
 
-  // The tracers are advected, not painted: each one only ever moves sideways
-  // from its own rest position. The crowding and thinning you see is a
-  // consequence of that motion, not something drawn on top of it.
+  // The tracers are advected, not painted: each one only ever moves up and
+  // down from its own rest position, in a single column on the tube's axis.
+  // The crowding and thinning you see is a consequence of that motion, not
+  // something drawn on top of it.
+  //
+  // Note that nothing clamps the parcels inside the tube. The mode shape
+  // cos(PI*u) gives the largest excursion at the two open ends, and air really
+  // does slosh in and out of an open end: at large amplitude the end parcels
+  // should visibly cross the boundary. Pinning them at the opening would draw
+  // a wall that is not there.
   function drawTracerParticles(tubeGeometry) {
-    const { tubeLeftX, tubeRightX, tubePixelLength } = tubeGeometry;
+    const { tubeCenterX, tubePixelLength } = tubeGeometry;
     const amplitudePixels = tracerAmplitudePixels(tubePixelLength);
-    const wallMargin = TRACER_DIAMETER / 2;
 
     p.noStroke();
     p.fill(COLOR_TRACER());
     for (const restPosition of tracerRestPositions) {
       const offsetPixels = amplitudePixels * displacementShape(restPosition);
-      const drawnX = p.constrain(
-        tubeLeftX + restPosition * tubePixelLength + offsetPixels,
-        tubeLeftX + wallMargin,
-        tubeRightX - wallMargin
-      );
-      p.circle(drawnX, TUBE_CENTER_Y, TRACER_DIAMETER);
+      // Minus: a positive displacement means "toward the top of the tube",
+      // which is a decrease in screen y.
+      const drawnY = yForNormalizedPosition(restPosition, tubeGeometry) - offsetPixels;
+      p.circle(tubeCenterX, drawnY, TRACER_DIAMETER);
     }
   }
 
+  // Two side walls and nothing across the ends. The missing top and bottom
+  // edges are the whole point: this is a pipe open to the room at both ends,
+  // not a sealed box.
   function drawTube(tubeGeometry) {
-    const { tubeLeftX, tubeRightX } = tubeGeometry;
+    const { tubeLeftX, tubeRightX, tubeTopY, tubeBottomY } = tubeGeometry;
 
-    // Static duct outline: the physical container, independent of pressure.
-    p.noFill();
-    p.stroke(COLOR_INK_SOFT());
-    p.strokeWeight(1.5);
-    p.rectMode(p.CORNERS);
-    p.rect(tubeLeftX, TUBE_CENTER_Y - TUBE_WALL_HEIGHT / 2, tubeRightX, TUBE_CENTER_Y + TUBE_WALL_HEIGHT / 2, 4);
-
-    // End walls, drawn heavier so the chamber reads as closed at both ends.
     p.stroke(COLOR_WALL());
-    p.strokeWeight(7);
-    const wallOverhang = 14;
-    p.line(tubeLeftX, TUBE_CENTER_Y - TUBE_WALL_HEIGHT / 2 - wallOverhang, tubeLeftX, TUBE_CENTER_Y + TUBE_WALL_HEIGHT / 2 + wallOverhang);
-    p.line(tubeRightX, TUBE_CENTER_Y - TUBE_WALL_HEIGHT / 2 - wallOverhang, tubeRightX, TUBE_CENTER_Y + TUBE_WALL_HEIGHT / 2 + wallOverhang);
-
+    p.strokeWeight(2.5);
+    p.line(tubeLeftX, tubeTopY, tubeLeftX, tubeBottomY);
+    p.line(tubeRightX, tubeTopY, tubeRightX, tubeBottomY);
     p.strokeWeight(1);
   }
 
-  // The pressure sensor: a transducer mounted in the closed end wall. It is
-  // drawn on top of the wall so it reads as part of the hardware, and it is
-  // the single point the trace panel below is plotting.
-  function drawSensor(tubeGeometry) {
-    const { tubeLeftX, tubeRightX, tubePixelLength } = tubeGeometry;
-    const sensorX = tubeLeftX + SENSOR_NORMALIZED_POSITION * tubePixelLength;
-    const sensorY = TUBE_CENTER_Y + SENSOR_VERTICAL_OFFSET;
+  // Small arrows outside each opening, both pointing up: air in at the bottom,
+  // out at the top. They say "flow-through device" rather than "sealed
+  // chamber", which is the entire reason this demo is a Rijke tube and not the
+  // closed duct it started as. (The flow itself is not modelled here.)
+  function drawFlowArrows(tubeGeometry) {
+    const { tubeCenterX, tubeTopY, tubeBottomY } = tubeGeometry;
 
-    // Pale collar so the dot stays legible against the dark end wall.
+    drawUpwardArrow(tubeCenterX, tubeBottomY + 26, tubeBottomY + 8);
+    drawUpwardArrow(tubeCenterX, tubeTopY - 8, tubeTopY - 26);
+
     p.noStroke();
-    p.fill(COLOR_BACKGROUND());
-    p.circle(sensorX, sensorY, SENSOR_DIAMETER + 6);
-    p.fill(COLOR_SENSOR());
-    p.circle(sensorX, sensorY, SENSOR_DIAMETER);
-
-    // Label sits outside the chamber so it never covers the gas.
-    const labelIsOnLeft = SENSOR_NORMALIZED_POSITION < 0.5;
-    p.fill(COLOR_SENSOR());
-    p.textFont('Helvetica');
+    p.fill(COLOR_INK_SOFT());
+    p.textFont(FONT_LABEL);
     p.textSize(11);
-    p.textAlign(labelIsOnLeft ? p.RIGHT : p.LEFT, p.CENTER);
-    p.text(
-      'sensor',
-      labelIsOnLeft ? tubeLeftX - 14 : tubeRightX + 14,
-      sensorY
-    );
+    p.textAlign(p.LEFT, p.CENTER);
+    p.text('air in', tubeCenterX + 14, tubeBottomY + 17);
+    p.text('air out', tubeCenterX + 14, tubeTopY - 17);
   }
 
-  // Short reading key, so none of the colours are left to guesswork:
-  // warm = gas squeezed together, cool = gas pulled apart, green = the probe
-  // whose signal becomes the graph.
-  function drawColorLegend() {
-    const rows = [
-      [
-        { swatch: COLOR_COMPRESSION(), label: 'compression, pressure above rest' },
-        { swatch: COLOR_RAREFACTION(), label: 'rarefaction, pressure below rest' }
-      ],
-      [
-        { swatch: COLOR_TRACER(), label: 'gas parcels, carried by the wave' },
-        { swatch: COLOR_SENSOR(), label: 'pressure sensor, its signal is the graph below' }
-      ]
-    ];
-    const rowCenterY = [LEGEND_ROW_ONE_Y, LEGEND_ROW_TWO_Y];
+  function drawUpwardArrow(x, tailY, tipY) {
+    const headSize = 5;
+    p.stroke(COLOR_INK_SOFT());
+    p.strokeWeight(1.5);
+    p.line(x, tailY, x, tipY);
+    p.line(x, tipY, x - headSize, tipY + headSize);
+    p.line(x, tipY, x + headSize, tipY + headSize);
+    p.strokeWeight(1);
+  }
 
-    p.textFont('Helvetica');
-    p.textSize(12);
+  // The pressure sensor: a transducer tapped into the tube wall at mid-height,
+  // on the pressure antinode. It is drawn on the wall itself so it reads as
+  // part of the hardware, and it is the single point the trace panel is
+  // plotting. The label is pushed sideways, clear of the tracer column running
+  // down the tube's axis.
+  function drawSensor(tubeGeometry) {
+    const { tubeRightX } = tubeGeometry;
+    const sensorY = yForNormalizedPosition(SENSOR_NORMALIZED_POSITION, tubeGeometry);
+
+    // Pale collar so the dot stays legible against the wall it straddles.
+    p.noStroke();
+    p.fill(COLOR_BACKGROUND());
+    p.circle(tubeRightX, sensorY, SENSOR_DIAMETER + 6);
+    p.fill(COLOR_SENSOR());
+    p.circle(tubeRightX, sensorY, SENSOR_DIAMETER);
+
+    p.fill(COLOR_SENSOR());
+    p.textFont(FONT_LABEL);
+    p.textSize(11);
+    p.textAlign(p.LEFT, p.CENTER);
+    p.text('sensor', tubeRightX + SENSOR_HORIZONTAL_OFFSET, sensorY);
+  }
+
+  // Short reading key along the bottom of the canvas, so none of the colours
+  // are left to guesswork: warm = gas squeezed together, cool = gas pulled
+  // apart, green = the probe whose signal becomes the graph.
+  function drawColorLegend() {
+    const items = [
+      { swatch: COLOR_COMPRESSION(), label: 'compression, pressure above rest' },
+      { swatch: COLOR_RAREFACTION(), label: 'rarefaction, pressure below rest' },
+      { swatch: COLOR_TRACER(), label: 'gas parcels, carried by the wave' },
+      { swatch: COLOR_SENSOR(), label: 'pressure sensor, plotted at right' }
+    ];
+
+    p.textFont(FONT_LABEL);
+    p.textSize(11);
     p.textAlign(p.LEFT, p.CENTER);
 
-    const swatchSize = 11;
-    const swatchGap = 7;
-    const itemGap = 30;
+    const swatchSize = 10;
+    const swatchGap = 6;
+    const itemGap = 20;
+
+    let totalWidth = -itemGap;
+    for (const item of items) {
+      totalWidth += swatchSize + swatchGap + p.textWidth(item.label) + itemGap;
+    }
 
     p.rectMode(p.CENTER);
-    rows.forEach((items, rowIndex) => {
-      const centerY = rowCenterY[rowIndex];
+    let cursorX = CANVAS_WIDTH / 2 - totalWidth / 2;
+    for (const item of items) {
+      p.noStroke();
+      p.fill(item.swatch);
+      p.rect(cursorX + swatchSize / 2, LEGEND_Y, swatchSize, swatchSize, 2);
+      cursorX += swatchSize + swatchGap;
 
-      let totalWidth = -itemGap;
-      for (const item of items) {
-        totalWidth += swatchSize + swatchGap + p.textWidth(item.label) + itemGap;
-      }
-
-      let cursorX = CANVAS_WIDTH / 2 - totalWidth / 2;
-      for (const item of items) {
-        p.noStroke();
-        p.fill(item.swatch);
-        p.rect(cursorX + swatchSize / 2, centerY, swatchSize, swatchSize, 2);
-        cursorX += swatchSize + swatchGap;
-
-        p.fill(COLOR_INK_SOFT());
-        p.text(item.label, cursorX, centerY);
-        cursorX += p.textWidth(item.label) + itemGap;
-      }
-    });
+      p.fill(COLOR_INK_SOFT());
+      p.text(item.label, cursorX, LEGEND_Y);
+      cursorX += p.textWidth(item.label) + itemGap;
+    }
     p.rectMode(p.CORNER);
   }
 
   function drawFrequencyReadout() {
     p.noStroke();
     p.fill(COLOR_INK());
-    p.textFont('Helvetica');
+    p.textFont(FONT_MONO);
     p.textSize(13);
     p.textAlign(p.RIGHT, p.TOP);
     p.text(`Natural pitch: ${naturalFrequency.toFixed(2)} Hz`, CANVAS_WIDTH - 12, 12);
+
+    p.textFont(FONT_LABEL);
     p.textAlign(p.LEFT, p.TOP);
     p.fill(COLOR_INK_SOFT());
-    p.text('Press Pulse to excite the chamber', 12, 12);
+    p.text('Press Pulse to excite the tube', 12, 12);
   }
 
   // -------------------------------------------------------------------------
@@ -438,16 +560,17 @@ const sketch = (p) => {
   // -------------------------------------------------------------------------
 
   function drawTracePanel() {
-    p.rectMode(p.CORNER); // drawTube() leaves rectMode set to CORNERS
+    p.rectMode(p.CORNER);
     p.noStroke();
     p.fill(COLOR_PANEL());
     p.rect(TRACE_LEFT - 20, TRACE_TOP - 24, (TRACE_RIGHT - TRACE_LEFT) + 40, TRACE_HEIGHT + 44, 6);
 
     p.fill(COLOR_INK_SOFT());
+    p.textFont(FONT_LABEL);
     p.textSize(12);
     p.textAlign(p.LEFT, p.BOTTOM);
     p.text(
-      `sensor pressure vs. time, measured at the closed end  (last ${TRACE_SECONDS}s)`,
+      `sensor pressure vs. time, measured at mid-height  (last ${TRACE_SECONDS}s)`,
       TRACE_LEFT - 10,
       TRACE_TOP - 8
     );

@@ -1,141 +1,425 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Thermoacoustic Instability, Demo 1: The Resonator</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thermoacoustic Instability — an interactive walkthrough</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #f7f5f0;
-    --panel: #ffffff;
-    --ink: #23241f;
-    --ink-soft: #5b5d54;
-    --accent-warm: #d9762b;
-    --accent-warm-dark: #b85f1c;
-    --accent-cool: #2b6fd9;
-    --accent-cool-soft: #9fc0f0;
-    --line: #d8d4c8;
-  }
+:root{
+  --soot:#16181C;
+  --soot-2:#1F2228;
+  --paper:#F1F2F0;
+  --ember:#E2571E;
+  --steel:#2E6F8E;
+  --graphite:#5A5E66;
+  --brass:#C9A227;
+  --rule:rgba(0,0,0,.12);
+  --rule-dk:rgba(255,255,255,.14);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--paper);color:var(--soot);
+  font-family:"Source Sans 3",system-ui,sans-serif;
+  font-size:18px;line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:760px;margin:0 auto;padding:0 24px}
+.wide{max-width:1040px;margin:0 auto;padding:0 24px}
 
-  * { box-sizing: border-box; }
+h1,h2,h3{font-family:"Instrument Serif",Georgia,serif;font-weight:400;letter-spacing:.2px}
+h1{font-size:clamp(2.6rem,7vw,4.6rem);line-height:1.02;margin:0 0 .4em}
+h2{font-size:clamp(1.9rem,4vw,2.7rem);line-height:1.1;margin:0 0 .45em}
+h3{font-size:1.35rem;margin:0 0 .35em}
+p{margin:0 0 1.1em}
+a{color:var(--steel)}
 
-  html, body {
-    margin: 0;
-    padding: 0;
-    background: var(--bg);
-    color: var(--ink);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  }
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace;font-size:.72rem;font-weight:500;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--graphite);
+  margin:0 0 1em;display:block;
+}
+.eyebrow.on-dark{color:var(--brass)}
 
-  #app {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 24px 20px 40px;
-  }
+/* ---------- hero ---------- */
+.hero{background:var(--soot);color:var(--paper);padding:120px 0 0;position:relative;overflow:hidden}
+.hero h1{color:#fff}
+.hero .lede{font-size:1.25rem;color:#B9BDC4;max-width:46ch}
+.hero-meta{
+  font-family:"IBM Plex Mono",monospace;font-size:.75rem;color:#7C828C;
+  letter-spacing:.06em;margin-top:56px;padding-top:18px;border-top:1px solid var(--rule-dk);
+  display:flex;gap:28px;flex-wrap:wrap;
+}
+.trace-band{display:block;width:100%;height:150px;margin-top:44px}
 
-  h1 {
-    font-size: 1.4rem;
-    font-weight: 600;
-    margin: 0 0 4px;
-  }
+/* ---------- sections ---------- */
+section{padding:88px 0}
+section.dark{background:var(--soot);color:var(--paper)}
+section.dark h2{color:#fff}
+section.dark p{color:#C2C6CD}
+.rule{height:1px;background:var(--rule);border:0;margin:0}
 
-  .subtitle {
-    color: var(--ink-soft);
-    font-size: 0.95rem;
-    margin: 0 0 18px;
-  }
+.lead-q{
+  font-family:"Instrument Serif",Georgia,serif;font-style:italic;
+  font-size:clamp(1.6rem,3.4vw,2.2rem);line-height:1.3;
+  color:var(--ember);margin:1.4em 0 .2em;
+}
 
-  #canvas-holder {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 10px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  }
+/* ---------- placeholders ---------- */
+.ph{
+  border:2px dashed rgba(0,0,0,.28);border-radius:2px;
+  background:repeating-linear-gradient(135deg,transparent,transparent 9px,rgba(0,0,0,.035) 9px,rgba(0,0,0,.035) 18px);
+  padding:40px 24px;text-align:center;margin:28px 0;
+}
+.ph .tag{
+  font-family:"IBM Plex Mono",monospace;font-size:.7rem;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ember);display:block;margin-bottom:10px;
+}
+.ph .what{font-size:1rem;color:var(--graphite);max-width:52ch;margin:0 auto}
+.ph.img{min-height:230px;display:flex;flex-direction:column;justify-content:center}
+.ph.dark-ph{border-color:rgba(255,255,255,.3);background:repeating-linear-gradient(135deg,transparent,transparent 9px,rgba(255,255,255,.05) 9px,rgba(255,255,255,.05) 18px)}
+.ph.dark-ph .what{color:#9BA1AA}
 
-  #controls {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    flex-wrap: wrap;
-    margin-top: 16px;
-    padding: 14px 16px;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 10px;
-  }
+/* ---------- demo blocks ---------- */
+.demo{border-top:2px solid var(--soot);padding-top:26px;margin:0 0 20px}
+.demo-head{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:6px}
+.demo-num{
+  font-family:"IBM Plex Mono",monospace;font-size:.75rem;font-weight:500;
+  letter-spacing:.14em;color:var(--paper);background:var(--soot);
+  padding:4px 9px;border-radius:2px;
+}
+.demo h3{margin:0}
+.teaches{
+  font-family:"IBM Plex Mono",monospace;font-size:.78rem;color:var(--graphite);
+  border-left:2px solid var(--brass);padding-left:12px;margin:14px 0 20px;
+}
+.ph.demo-ph{min-height:290px;display:flex;flex-direction:column;justify-content:center;border-color:var(--steel)}
+.ph.demo-ph .tag{color:var(--steel)}
+.knobs{
+  font-family:"IBM Plex Mono",monospace;font-size:.74rem;color:var(--graphite);
+  margin-top:14px;letter-spacing:.03em;
+}
 
-  #controls label {
-    font-size: 0.9rem;
-    color: var(--ink-soft);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+/* ---------- live demo stage ---------- */
+/* Breaks out of .wrap so the 860px sketch is shown near its native size. */
+.demo-stage{
+  position:relative;left:50%;transform:translateX(-50%);
+  width:min(900px,calc(100vw - 48px));margin:28px 0;
+}
+.demo-stage .stage-panel{
+  background:#fff;border:1px solid var(--rule);border-radius:2px;padding:10px;
+}
+.demo-stage canvas{display:block;width:100%;height:auto}
+.demo-controls{
+  display:flex;align-items:center;gap:22px;flex-wrap:wrap;
+  margin-top:14px;padding:12px 16px;
+  background:#fff;border:1px solid var(--rule);border-radius:2px;
+}
+.demo-controls label{
+  display:flex;align-items:center;gap:12px;
+  font-family:"IBM Plex Mono",monospace;font-size:.72rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--graphite);
+}
+.demo-controls input[type=range]{width:200px;accent-color:var(--steel)}
+.demo-controls button{
+  font-family:"IBM Plex Mono",monospace;font-size:.72rem;font-weight:500;
+  letter-spacing:.14em;text-transform:uppercase;
+  color:var(--paper);background:var(--ember);border:0;border-radius:2px;
+  padding:9px 20px;cursor:pointer;transition:background .15s ease;
+}
+.demo-controls button:hover{background:#C44713}
+.demo-controls button:active{transform:translateY(1px)}
 
-  #chamberLengthSlider {
-    width: 200px;
-    accent-color: var(--accent-cool);
-  }
+/* ---------- math callout ---------- */
+details.math{
+  border:1px solid var(--rule);border-left:3px solid var(--brass);
+  background:rgba(201,162,39,.05);border-radius:2px;
+  margin:26px 0;padding:0;
+}
+details.math summary{
+  cursor:pointer;list-style:none;padding:14px 18px;
+  font-family:"IBM Plex Mono",monospace;font-size:.76rem;
+  letter-spacing:.1em;text-transform:uppercase;color:#8A7318;
+  display:flex;align-items:center;gap:10px;
+}
+details.math summary::-webkit-details-marker{display:none}
+details.math summary::before{content:"+";font-size:1.05rem;line-height:1;color:var(--brass)}
+details.math[open] summary::before{content:"–"}
+details.math .body{padding:0 18px 18px;font-size:.95rem}
+.eq{
+  font-family:"IBM Plex Mono",monospace;font-size:.95rem;
+  background:#fff;border:1px solid var(--rule);border-radius:2px;
+  padding:14px 16px;margin:12px 0;overflow-x:auto;
+}
 
-  #pulseButton {
-    background: var(--accent-warm);
-    color: white;
-    border: none;
-    padding: 9px 18px;
-    border-radius: 7px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.15s ease;
-  }
+/* ---------- figures (real images) ---------- */
+figure{margin:28px 0}
+figure img{display:block;width:100%;height:auto;border-radius:2px}
+figcaption{
+  font-family:"IBM Plex Mono",monospace;font-size:.72rem;letter-spacing:.04em;
+  color:var(--graphite);margin-top:10px;line-height:1.5;
+}
+section.dark figcaption{color:#8A9099}
 
-  #pulseButton:hover {
-    background: var(--accent-warm-dark);
-  }
+/* ---------- mechanisms list ---------- */
+.mechs{list-style:none;counter-reset:m;padding:0;margin:28px 0 32px}
+.mechs li{
+  counter-increment:m;position:relative;padding:16px 0 16px 52px;
+  border-top:1px solid var(--rule);
+}
+.mechs li:last-child{border-bottom:1px solid var(--rule)}
+.mechs li::before{
+  content:counter(m,decimal-leading-zero);position:absolute;left:0;top:18px;
+  font-family:"IBM Plex Mono",monospace;font-size:.8rem;color:var(--ember);letter-spacing:.06em;
+}
+.mechs .from{
+  display:inline-block;font-family:"IBM Plex Mono",monospace;
+  font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--graphite);border:1px solid var(--rule);border-radius:2px;
+  padding:2px 7px;margin-left:6px;white-space:nowrap;
+}
 
-  #pulseButton:active {
-    transform: translateY(1px);
-  }
+/* ---------- refs ---------- */
+.refs{font-size:.92rem;color:var(--graphite)}
+.refs li{margin-bottom:.7em}
+footer{background:var(--soot);color:#7C828C;padding:40px 0;font-family:"IBM Plex Mono",monospace;font-size:.74rem;letter-spacing:.05em}
 
-  .caption {
-    margin-top: 16px;
-    padding: 14px 16px;
-    background: #fbf3e8;
-    border: 1px solid #eddcc0;
-    border-radius: 10px;
-    color: #4a3a24;
-    font-size: 0.95rem;
-    line-height: 1.5;
-  }
-
-  .caption strong {
-    color: var(--accent-warm-dark);
-  }
-
-  .swatch-warm { color: #b3401f; font-weight: 600; }
-  .swatch-cool { color: #3c7fb1; font-weight: 600; }
-  .swatch-sensor { color: #1f9254; font-weight: 600; }
+@media (max-width:620px){
+  body{font-size:17px}
+  section{padding:64px 0}
+  .hero{padding-top:80px}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 </head>
 <body>
-  <div id="app">
-    <h1>Demo 1: The Resonator</h1>
-    <p class="subtitle">Pulse the chamber and watch the gas. The shading is local pressure, <span class="swatch-warm">warm where the gas is compressed</span> and <span class="swatch-cool">cool where it is rarefied</span>. The dark dots are gas parcels carried by the wave. The <span class="swatch-sensor">green dot</span> is a pressure sensor in the closed end wall; the graph below is its reading over time. It rings, and it always fades.</p>
-    <div id="canvas-holder"></div>
-    <div id="controls">
-      <label for="chamberLengthSlider">Chamber length
-        <input type="range" id="chamberLengthSlider" min="60" max="220" value="140" step="1">
-      </label>
-      <button id="pulseButton">Pulse</button>
-    </div>
-    <p class="caption">
-      The chamber is a resonator: pulsed, it rings at its own pitch and fades.
-      <strong>Something must pump it for a tone to last.</strong>
-    </p>
-  </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
-  <script src="sketch.js"></script>
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow on-dark">Complex systems in mechanical engineering</span>
+    <h1>The engine that<br>shook itself apart</h1>
+    <p class="lede">In 1962, a rocket engine destroyed itself on a test stand in under a second. Nothing broke first. No part failed. The engine was torn apart by its own sound.</p>
+    <div class="hero-meta">
+      <span>FIU · Mechanical &amp; Materials Engineering</span>
+      <span>Interactive walkthrough</span>
+      <span>Est. 20 min</span>
+    </div>
+  </div>
+  <!-- SIGNATURE: pressure trace, noisy here, resolves to a clean tone by page end -->
+  <svg class="trace-band" viewBox="0 0 1200 150" preserveAspectRatio="none" aria-hidden="true">
+    <polyline fill="none" stroke="#2E6F8E" stroke-width="1.6" points="0,75 12,71 24,80 36,68 48,83 60,72 72,78 84,66 96,84 108,70 120,79 132,73 144,68 156,85 168,71 180,77 192,67 204,82 216,74 228,69 240,80 252,72 264,78 276,84 288,68 300,76 312,71 324,81 336,69 348,79 360,73 372,66 384,83 396,75 408,70 420,80 432,68 444,77 456,85 468,71 480,74 492,79 504,66 516,82 528,73 540,76 552,70 564,84 576,68 588,78 600,72 612,80 624,64 636,88 648,70 660,76 672,60 684,92 696,68 708,80 720,58 732,94 744,66 756,82 768,54 780,98 792,64 804,84 816,50 828,102 840,62 852,86 864,46 876,106 888,60 900,88 912,42 924,110 936,58 948,90 960,38 972,114 984,56 996,92 1008,34 1020,118 1032,54 1044,94 1056,30 1068,122 1080,52 1092,96 1104,26 1116,126 1128,50 1140,98 1152,24 1164,128 1176,48 1188,100 1200,22"/>
+  </svg>
+</header>
+
+<!-- ============ 1. THE MACHINE ============ -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow">01 — The machine</span>
+    <h2>Five of these lifted the Saturn V</h2>
+    <p>The F-1 was the most powerful single-chamber liquid rocket engine ever flown. Five of them made up the first stage of the Saturn V, together producing 7.5 million pounds of thrust. Inside each one, kerosene and liquid oxygen burned continuously in a chamber roughly the size of a car.</p>
+    <p>Combustion chambers like this one pack an extraordinary amount of energy into very little space, up to 50&nbsp;GW per cubic metre in a liquid rocket. That energy density is what makes them useful. It is also what makes them dangerous in a way that has nothing to do with the fuel burning.</p>
+  </div>
+  <div class="wide">
+    <figure>
+  <img src="Thermoimages/HeroImage.jpg"
+       alt="Wernher von Braun standing beside the five F-1 engines of a Saturn V first stage"
+       style="max-height:620px; width:auto; display:block; margin:0 auto;">
+  <figcaption>Von Braun with the F-1 engines of a Saturn V first stage. Credit: NASA</figcaption>
+</figure>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- ============ 2. WHAT WENT WRONG ============ -->
+<section class="dark">
+  <div class="wrap">
+    <span class="eyebrow on-dark">02 — What went wrong</span>
+    <h2>June 28, 1962</h2>
+    <p>At the Edwards test stand, engineers lit an F-1 for a sustained run. What followed was described by F-1 engineer Robert Biggs as a combustion disturbance of unprecedented ferocity. Both fuel lines blew off the engine. The oxygen-rich burn that followed consumed it entirely.</p>
+    <p>Ten more episodes followed. Two ended in complete destruction. An earlier instability, in 1961, had already melted a test engine.</p>
+    <p>Nothing had broken. There was no crack, no bad weld, no failed valve. The engine had been running normally, and then in a fraction of a second it destroyed itself.</p>
+  </div>
+  <div class="wide">
+    <div class="ph img dark-ph">
+      <span class="tag">Image placeholder</span>
+      <p class="what">Damaged / destroyed combustion chamber.<br>Lead: Laurent (2020) thesis, Fig. 1.6. The right panel is a NASA chamber destroyed during early Apollo development. Original source still to be traced before use.</p>
+    </div>
+  </div>
+  <div class="wrap">
+    <p>Fixing it took roughly 2,000 full-scale tests across 210 injector designs. The eventual solution was not a stronger chamber or a better weld. It was a set of copper baffles on the injector plate, dividers whose only job was to interfere with sound.</p>
+    <p class="lead-q">Why would an engine tear itself apart, and why would dividing up the chamber stop it?</p>
+    <p>The rest of this page answers that question. Not by explaining it, but by letting you build it, one piece at a time.</p>
+  </div>
+</section>
+
+<!-- ============ 3. THE DEMOS ============ -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow">03 — Building the mechanism</span>
+    <h2>Four steps</h2>
+    <p>Everything below runs on the same simplified chamber: a Rijke tube, a vertical pipe open at both ends with air drawn up through it, a heated gauze inside, and a pressure sensor tapped into the wall at mid-height. Each step switches on one more piece of physics. None of the first three is complicated. The interesting behaviour only appears when they are all connected.</p>
+
+    <!-- DEMO 1 -->
+    <div class="demo">
+      <div class="demo-head"><span class="demo-num">DEMO 1</span><h3>The tube rings</h3></div>
+      <p class="teaches">Teaches: a tube has a natural pitch, and left alone, sound always dies out.</p>
+      <p>Before adding any flame, look at the tube on its own, gauze cold. Give the gas a push and it rings at a pitch set by the tube's length, then fades.</p>
+      <div class="demo-stage">
+        <div class="stage-panel"><div id="canvas-holder"></div></div>
+        <div class="demo-controls">
+          <label for="chamberLengthSlider">Tube length
+            <input type="range" id="chamberLengthSlider" min="60" max="220" value="140" step="1">
+          </label>
+          <button type="button" id="pulseButton">Pulse</button>
+        </div>
+      </div>
+      <p>It always fades. Energy leaks out through the walls and the ends. So for a tone to last, something has to put energy back in faster than damping takes it out.</p>
+    </div>
+
+    <!-- DEMO 2 -->
+    <div class="demo">
+      <div class="demo-head"><span class="demo-num">DEMO 2</span><h3>You are the flame</h3></div>
+      <p class="teaches">Teaches: timing, not strength, decides whether energy input grows or kills the oscillation.</p>
+      <p>Now you supply the energy. Each press adds a pulse of heat. Try to build the tone up, then try to kill it.</p>
+      <div class="ph demo-ph">
+        <span class="tag">Interactive placeholder</span>
+        <p class="what">Same duct. A button injects a heat pulse. A phase readout shows where each pulse landed in the pressure cycle.</p>
+        <p class="knobs">CONTROLS &nbsp;·&nbsp; pulse heat &nbsp;·&nbsp; chamber length</p>
+      </div>
+      <p>Pressing in rhythm builds it. Pressing off-rhythm flattens it. Same energy either way. Only the timing changed. It works like pushing a swing.</p>
+
+      <details class="math">
+        <summary>The maths: Rayleigh's criterion</summary>
+        <div class="body">
+          <p>Lord Rayleigh wrote this down in 1878. Heat added to a gas amplifies a pressure oscillation when it arrives during the compression phase, and damps it when it arrives during rarefaction. Over a cycle, the oscillation gains energy when</p>
+          <div class="eq">&#8751; p&prime;(t) &middot; q&prime;(t) dt &nbsp;&gt;&nbsp; 0</div>
+          <p>where p&prime; is the pressure fluctuation and q&prime; the heat-release fluctuation. In words: heat and pressure have to peak together. [PLACEHOLDER: expand with the piston-engine analogy from Juniper &amp; Sujith §1.]</p>
+        </div>
+      </details>
+    </div>
+
+    <!-- DEMO 3 -->
+    <div class="demo">
+      <div class="demo-head"><span class="demo-num">DEMO 3</span><h3>The flame answers late</h3></div>
+      <p class="teaches">Teaches: the flame reacts to the sound from a moment ago, and the delay is set by the geometry.</p>
+      <p>In a real engine nobody is choosing the timing. So who does? Drive the sound yourself and watch the flame respond, but not immediately.</p>
+      <div class="ph demo-ph">
+        <span class="tag">Interactive placeholder</span>
+        <p class="what">User drives the acoustic field. A second trace shows heat release following it, offset in time. Changing chamber length visibly stretches the offset.</p>
+        <p class="knobs">CONTROLS &nbsp;·&nbsp; drive amplitude &nbsp;·&nbsp; chamber length &nbsp;·&nbsp; show delay</p>
+      </div>
+      <p>The sound sloshes fuel and air toward the flame, and that disturbance has to travel before it burns. The heat you see now was caused by the sound from a moment ago.</p>
+
+      <details class="math">
+        <summary>The maths: the n&ndash;&tau; model</summary>
+        <div class="body">
+          <p>The standard way to write this down, first used in the 1950s and still in use today:</p>
+          <div class="eq">q&prime;(x&#8320;, t) &nbsp;=&nbsp; n &middot; u&prime;(x&#8344;, t &minus; &tau;)</div>
+          <p>The heat release at the flame is proportional to the acoustic velocity a time &tau; earlier. The gain n sets how strongly the flame responds; &tau; is the delay. Juniper &amp; Sujith call this the model that contains the physics needed to explain thermoacoustic oscillations. [PLACEHOLDER: add note on where &tau; comes from physically.]</p>
+        </div>
+      </details>
+    </div>
+
+    <!-- DEMO 4 -->
+    <div class="demo">
+      <div class="demo-head"><span class="demo-num">DEMO 4</span><h3>Close the loop</h3></div>
+      <p class="teaches">Teaches: with both directions connected, the system drives itself, and geometry decides whether it lives or dies.</p>
+      <p>Now connect them. The flame pumps the sound; the sound drives the flame; the delay does the timing you were doing by hand. Nobody is choosing anything.</p>
+      <div class="ph demo-ph">
+        <span class="tag">Interactive placeholder</span>
+        <p class="what">Full loop running. Trace goes quiet &rarr; flickering &rarr; a single sustained tone. Flame visual pulses with heat release.</p>
+        <p class="knobs">CONTROLS &nbsp;·&nbsp; flame strength &nbsp;·&nbsp; chamber length &nbsp;·&nbsp; background noise</p>
+      </div>
+      <p>Turn the flame strength up and past a threshold the trace blooms into a steady tone. But leave the strength alone and change the chamber length instead, and the same flame flips between roaring and silent, because the delay has moved the heat into or out of step with the pressure.</p>
+
+      <details class="math">
+        <summary>The maths: all four mechanisms in one line</summary>
+        <div class="body">
+          <p>Juniper &amp; Sujith reduce the whole system to a single equation. Every piece you just built is a term in it:</p>
+          <div class="eq">ü&#8342; + &epsilon;(&xi;u&#8342;&sup2; &minus; &zeta;)u&#775;&#8342; + (k&pi;)&sup2;u&#8342; = &minus;2k&pi;&beta; u&#8342;(t &minus; &tau;)</div>
+          <p>(k&pi;)&sup2;u&#8342; is the resonator from Demo 1. &zeta; is the damping that made it fade. &beta;u&#8342;(t&minus;&tau;) is the delayed flame coupling from Demos 2 and 3. &xi;u&#8342;&sup2; is the saturation that stops the tone growing forever. [PLACEHOLDER: check symbol rendering and expand each term.]</p>
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- ============ 3b. WHAT YOU JUST BUILT ============ -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow">04 — What you just built</span>
+    <h2>Four mechanisms, and nothing else</h2>
+    <p>Everything you have been turning on comes down to four pieces of physics. This is the whole model, not a summary of it.</p>
+    <ol class="mechs">
+      <li><strong>An acoustic resonator.</strong> The chamber has a natural frequency and can store acoustic energy, so there is something to excite. <span class="from">Demo 1</span></li>
+      <li><strong>Damping.</strong> Energy leaks out. This is what makes a disturbance ring down, and it sets the threshold the flame has to beat. <span class="from">Demo 1</span></li>
+      <li><strong>An unsteady heat source coupled to the acoustic field.</strong> Heat drives the pressure wave, and the pressure wave feeds back and changes the heat. It has to go both ways. <span class="from">Demos 2 &amp; 3</span></li>
+      <li><strong>A time delay in that response.</strong> The flame answers the sound from a moment ago, and that lag decides where its energy lands in the cycle. <span class="from">Demos 3 &amp; 4</span></li>
+    </ol>
+    <p>A real combustor has far more than this: mean flow, an inlet and an outlet, many acoustic modes at once, steep temperature gradients, and the actual chemistry of burning. None of it is needed to produce the behaviour on this page, so none of it is here.</p>
+    <p>[PLACEHOLDER: decide whether this section reads better here, after the demos, or before Demo 1 as an up-front contract with the reader.]</p>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- ============ 5. THE ANSWER ============ -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow">05 — Back to the engine</span>
+    <h2>Why the baffles worked</h2>
+    <p>[PLACEHOLDER: return to the F-1 with the loop now built. The chamber was a resonator. The turbulent flame was an unsteady heat source coupled to it. The travel time of the disturbance set a delay. Above a threshold, the loop closed on itself.]</p>
+    <p>[PLACEHOLDER: the fix. The baffles did not strengthen anything. They divided the chamber so the acoustic modes that were coupling to the flame could not form. Rocketdyne changed the geometry, not the structure. Tie back to the chamber-length knob in Demo 4: geometry is the lever.]</p>
+    <p>[PLACEHOLDER: note that the driving mechanism is only around 0.1% efficient at turning heat into sound, and that it only builds into something destructive because acoustic damping in these engines is so low. Cite Juniper &amp; Sujith §1.]</p>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- ============ 5. COMPLEX SYSTEM ============ -->
+<section class="dark">
+  <div class="wrap">
+    <span class="eyebrow on-dark">06 — Why this is a complex system</span>
+    <h2>Order out of chaos</h2>
+    <p>Look back at what you built. Demo 1 was a spring that fades. Demo 2 was pushing a swing. Demo 3 was a delayed response. Not one of them is complicated, and you could predict what each would do before you touched it.</p>
+    <p>The threshold, the flickering, and the self-sustained tone appear nowhere in those three. They only exist once the loop is closed. That is what a complex system means: collective behaviour you cannot work out by studying the parts one at a time.</p>
+    <p>Inside a real combustor, the flame is turbulent, churning, disordered, noisy. And out of that disorder the system organises itself into a single coherent tone. Juniper and Sujith describe it as order emerging from chaos.</p>
+  </div>
+  <div class="wide">
+    <div class="ph dark-ph">
+      <span class="tag">Figure placeholder</span>
+      <p class="what">Three measured pressure traces: combustion noise, intermittency, full instability.<br>Journal figures are copyrighted: redraw from our own simulation output rather than reproduce.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ REFS ============ -->
+<section>
+  <div class="wrap">
+    <span class="eyebrow">References</span>
+    <ul class="refs">
+      <li>Rayleigh, J. W. S. (1878). The explanation of certain acoustical phenomena. <em>Nature</em> 18, 319&ndash;321.</li>
+      <li>Oefelein, J. C. &amp; Yang, V. (1993). Comprehensive review of liquid-propellant combustion instabilities in F-1 engines. <em>J. Propulsion and Power</em> 9(5), 657&ndash;677.</li>
+      <li>Lieuwen, T. C. (2002). Experimental investigation of limit-cycle oscillations in an unstable gas turbine combustor. <em>J. Propulsion and Power</em> 18(1), 61&ndash;67.</li>
+      <li>Balasubramanian, K. &amp; Sujith, R. I. (2008). Thermoacoustic instability in a Rijke tube: non-normality and nonlinearity. <em>Physics of Fluids</em> 20(4), 044103.</li>
+      <li>Juniper, M. P. &amp; Sujith, R. I. (2018). Sensitivity and nonlinearity of thermoacoustic oscillations. <em>Annu. Rev. Fluid Mech.</em> 50, 661&ndash;689.</li>
+      <li>Poinsot, T. (2017). Prediction and control of combustion instabilities in real engines. <em>Proc. Combustion Institute</em> 36(1), 1&ndash;28.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">MOCK-UP · DEMO 1 LIVE · REMAINING INTERACTIVES AND IMAGES NOT YET PLACED</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
+<script src="sketch.js"></script>
 </body>
 </html>
