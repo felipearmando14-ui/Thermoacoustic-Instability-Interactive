@@ -201,8 +201,8 @@ footer{background:var(--soot);color:#7C828C;padding:40px 0;font-family:"IBM Plex
 <header class="hero">
   <div class="wrap">
     <span class="eyebrow on-dark">Complex systems in mechanical engineering</span>
-    <h1>The engine that<br>shook itself apart</h1>
-    <p class="lede">In 1962, a rocket engine destroyed itself on a test stand in under a second. Nothing broke first. No part failed. The engine was torn apart by its own sound.</p>
+    <h1>Thermoacoustic instability</h1>
+    <p class="lede">The phenomenon that has impeded the progress of the aviation, defense, and space industries</p>
     <div class="hero-meta">
       <span>FIU · Mechanical &amp; Materials Engineering</span>
       <span>Interactive walkthrough</span>
@@ -218,17 +218,16 @@ footer{background:var(--soot);color:#7C828C;padding:40px 0;font-family:"IBM Plex
 <!-- ============ 1. THE MACHINE ============ -->
 <section>
   <div class="wrap">
-    <span class="eyebrow">01 — The machine</span>
-    <h2>Five of these lifted the Saturn V</h2>
-    <p>The F-1 was the most powerful single-chamber liquid rocket engine ever flown. Five of them made up the first stage of the Saturn V, together producing 7.5 million pounds of thrust. Inside each one, kerosene and liquid oxygen burned continuously in a chamber roughly the size of a car.</p>
-    <p>Combustion chambers like this one pack an extraordinary amount of energy into very little space, up to 50&nbsp;GW per cubic metre in a liquid rocket. That energy density is what makes them useful. It is also what makes them dangerous in a way that has nothing to do with the fuel burning.</p>
+    <span class="eyebrow">01</span>
+    <h2>The F-1 Engine</h2>
+    <p>The F-1 engine was a leap in rocket engines through chamber size and thrust. It greatly exceeded NASA’s previous H-1 engine. It produced 1.5 million pounds of thrust, which is nearly 8 times the thrust of the H-1 engine. Five of them launched the Saturn V 38 miles high. The engines together consumed 15 tons of propellant per second. The F-1, initially, had to become a simple model because it was too large; any advanced rocket sized up to match the dimensions would just become too complex for engineers to resolve. They were given a short time span: the end of the decade. Engineers suspected that as engines increased in size, thermoacoustic instability would worsen.</p>
   </div>
   <div class="wide">
     <figure>
   <img src="Thermoimages/HeroImage.jpg"
        alt="Wernher von Braun standing beside the five F-1 engines of a Saturn V first stage"
        style="max-height:620px; width:auto; display:block; margin:0 auto;">
-  <figcaption>Von Braun with the F-1 engines of a Saturn V first stage. Credit: NASA</figcaption>
+  <figcaption>Wernher von Braun with the five F-1 engines of the Saturn V first stage. Credit: NASA (image ID 0201422).</figcaption>
 </figure>
   </div>
 </section>
@@ -238,11 +237,9 @@ footer{background:var(--soot);color:#7C828C;padding:40px 0;font-family:"IBM Plex
 <!-- ============ 2. WHAT WENT WRONG ============ -->
 <section class="dark">
   <div class="wrap">
-    <span class="eyebrow on-dark">02 — What went wrong</span>
-    <h2>June 28, 1962</h2>
-    <p>At the Edwards test stand, engineers lit an F-1 for a sustained run. What followed was described by F-1 engineer Robert Biggs as a combustion disturbance of unprecedented ferocity. Both fuel lines blew off the engine. The oxygen-rich burn that followed consumed it entirely.</p>
-    <p>Ten more episodes followed. Two ended in complete destruction. An earlier instability, in 1961, had already melted a test engine.</p>
-    <p>Nothing had broken. There was no crack, no bad weld, no failed valve. The engine had been running normally, and then in a fraction of a second it destroyed itself.</p>
+    <span class="eyebrow on-dark">02</span>
+    <h2>What the problem was</h2>
+    <p>Rocketdyne’s engineers performed tests with three different injectors. However, they all had combustion instability. The consequence came from pressure oscillations which, instead of decaying, grew into a destructive rhythm that was fed by the periodic combustion of fuel and the oscillation fed back to the flame, shaking the air-fuel mixture. Once instability got into the early model of the F-1, nothing could stop it until testers shut down the entire engine. It was thought that the new designs of the F-1 engine would have it under control, until, in June 1962, thermoacoustic instability led to the total loss of an F-1 engine. While engineers were trying to find a fix to this detrimental phenomenon, two more F-1 engines were lost in tests.</p>
   </div>
   <div class="wide">
     <div class="ph img dark-ph">
@@ -250,25 +247,20 @@ footer{background:var(--soot);color:#7C828C;padding:40px 0;font-family:"IBM Plex
       <p class="what">Damaged / destroyed combustion chamber.<br>Lead: Laurent (2020) thesis, Fig. 1.6. The right panel is a NASA chamber destroyed during early Apollo development. Original source still to be traced before use.</p>
     </div>
   </div>
-  <div class="wrap">
-    <p>Fixing it took roughly 2,000 full-scale tests across 210 injector designs. The eventual solution was not a stronger chamber or a better weld. It was a set of copper baffles on the injector plate, dividers whose only job was to interfere with sound.</p>
-    <p class="lead-q">Why would an engine tear itself apart, and why would dividing up the chamber stop it?</p>
-    <p>The rest of this page answers that question. Not by explaining it, but by letting you build it, one piece at a time.</p>
-  </div>
 </section>
 
 <!-- ============ 3. THE DEMOS ============ -->
 <section>
   <div class="wrap">
-    <span class="eyebrow">03 — Building the mechanism</span>
-    <h2>Four steps</h2>
-    <p>Everything below runs on the same simplified chamber: a Rijke tube, a vertical pipe open at both ends with air drawn up through it, a heated gauze inside, and a pressure sensor tapped into the wall at mid-height. Each step switches on one more piece of physics. None of the first three is complicated. The interesting behaviour only appears when they are all connected.</p>
+    <span class="eyebrow">03</span>
+    <h2>What creates thermoacoustic instability?</h2>
+    <p>Four components create this phenomenon: a resonator which enables acoustic oscillation, damping which sets the bar the heat release must pass to grow, unsteady heat release which couples to the sound, and time delay in the flame’s response to sound.</p>
+    <p>The simulations simulate what researchers use to safely and easily observe thermoacoustic instability compared to the F-1 engine which risked explosion: a Rijke tube. It is composed of a vertical pipe with openings at the top and bottom with a heated gauze inside that heats the air, which rises and pulls more air up through the tube, and a sensor in the middle meant to measure pressure.</p>
 
     <!-- DEMO 1 -->
     <div class="demo">
       <div class="demo-head"><span class="demo-num">DEMO 1</span><h3>The tube rings</h3></div>
-      <p class="teaches">Teaches: a tube has a natural pitch, and left alone, sound always dies out.</p>
-      <p>Before adding any flame, look at the tube on its own, gauze cold. Give the gas a push and it rings at a pitch set by the tube's length, then fades.</p>
+      <p>This is the Rijke tube without a heated gauze. Give the gas a pulse and watch it ring as damping eventually makes it dissipate.</p>
       <div class="demo-stage">
         <div class="stage-panel"><div id="canvas-holder"></div></div>
         <div class="demo-controls">
@@ -278,71 +270,60 @@ footer{background:var(--soot);color:#7C828C;padding:40px 0;font-family:"IBM Plex
           <button type="button" id="pulseButton">Pulse</button>
         </div>
       </div>
-      <p>It always fades. Energy leaks out through the walls and the ends. So for a tone to last, something has to put energy back in faster than damping takes it out.</p>
+      <p>Watch how the acoustic wave always dies. It needs another source of energy to keep it going.</p>
     </div>
 
     <!-- DEMO 2 -->
     <div class="demo">
-      <div class="demo-head"><span class="demo-num">DEMO 2</span><h3>You are the flame</h3></div>
-      <p class="teaches">Teaches: timing, not strength, decides whether energy input grows or kills the oscillation.</p>
-      <p>Now you supply the energy. Each press adds a pulse of heat. Try to build the tone up, then try to kill it.</p>
+      <div class="demo-head"><span class="demo-num">DEMO 2</span><h3>You control the heat</h3></div>
+      <p>You now supply the energy needed to keep the acoustic wave alive. Press to give pulses of heat and try to build the tone up.</p>
       <div class="ph demo-ph">
         <span class="tag">Interactive placeholder</span>
-        <p class="what">Same duct. A button injects a heat pulse. A phase readout shows where each pulse landed in the pressure cycle.</p>
-        <p class="knobs">CONTROLS &nbsp;·&nbsp; pulse heat &nbsp;·&nbsp; chamber length</p>
       </div>
-      <p>Pressing in rhythm builds it. Pressing off-rhythm flattens it. Same energy either way. Only the timing changed. It works like pushing a swing.</p>
+      <p>Watch how if you press it in rhythm with the acoustic wave it builds, otherwise it flattens.</p>
 
       <details class="math">
-        <summary>The maths: Rayleigh's criterion</summary>
+        <summary>The mathematics behind it: Rayleigh's criterion</summary>
         <div class="body">
-          <p>Lord Rayleigh wrote this down in 1878. Heat added to a gas amplifies a pressure oscillation when it arrives during the compression phase, and damps it when it arrives during rarefaction. Over a cycle, the oscillation gains energy when</p>
           <div class="eq">&#8751; p&prime;(t) &middot; q&prime;(t) dt &nbsp;&gt;&nbsp; 0</div>
-          <p>where p&prime; is the pressure fluctuation and q&prime; the heat-release fluctuation. In words: heat and pressure have to peak together. [PLACEHOLDER: expand with the piston-engine analogy from Juniper &amp; Sujith §1.]</p>
+          <p>where p&prime; is the pressure fluctuation and q&prime; the heat-release fluctuation.</p>
         </div>
       </details>
     </div>
 
     <!-- DEMO 3 -->
     <div class="demo">
-      <div class="demo-head"><span class="demo-num">DEMO 3</span><h3>The flame answers late</h3></div>
-      <p class="teaches">Teaches: the flame reacts to the sound from a moment ago, and the delay is set by the geometry.</p>
-      <p>In a real engine nobody is choosing the timing. So who does? Drive the sound yourself and watch the flame respond, but not immediately.</p>
+      <div class="demo-head"><span class="demo-num">DEMO 3</span><h3>How the gauze responds</h3></div>
+      <p>The gauze stays lit continuously this time. You control the delay in the gauze’s response to the sound now. In the Rijke tube, the sound oscillates the air and heat transfer off the hot wire depends on the speed of the air, but there is a thin layer of hot air surrounding the wire which takes time to settle into the new temperature profile that causes the heat to match what the air speed was a moment ago. The sound oscillates air speed and the heat oscillates with it but is delayed.</p>
       <div class="ph demo-ph">
         <span class="tag">Interactive placeholder</span>
-        <p class="what">User drives the acoustic field. A second trace shows heat release following it, offset in time. Changing chamber length visibly stretches the offset.</p>
-        <p class="knobs">CONTROLS &nbsp;·&nbsp; drive amplitude &nbsp;·&nbsp; chamber length &nbsp;·&nbsp; show delay</p>
       </div>
-      <p>The sound sloshes fuel and air toward the flame, and that disturbance has to travel before it burns. The heat you see now was caused by the sound from a moment ago.</p>
+      <p>The time delay parameter in this simulation is a model parameter, but in a real system what controls delay is thermal inertia at the gauze. In a rocket, time delay comes from the fuel getting disturbed by the pressure wave and mixing instead of a boundary layer, but they both do the same job.</p>
+      <p>OBSERVATION PLACEHOLDER [intended: offset between traces widens/narrows as delay changes]</p>
 
       <details class="math">
-        <summary>The maths: the n&ndash;&tau; model</summary>
+        <summary>The mathematics behind it: the n&ndash;&tau; model</summary>
         <div class="body">
-          <p>The standard way to write this down, first used in the 1950s and still in use today:</p>
           <div class="eq">q&prime;(x&#8320;, t) &nbsp;=&nbsp; n &middot; u&prime;(x&#8344;, t &minus; &tau;)</div>
-          <p>The heat release at the flame is proportional to the acoustic velocity a time &tau; earlier. The gain n sets how strongly the flame responds; &tau; is the delay. Juniper &amp; Sujith call this the model that contains the physics needed to explain thermoacoustic oscillations. [PLACEHOLDER: add note on where &tau; comes from physically.]</p>
+          <p>The gain n sets how strongly the gauze responds; &tau; is the delay.</p>
         </div>
       </details>
     </div>
 
     <!-- DEMO 4 -->
     <div class="demo">
-      <div class="demo-head"><span class="demo-num">DEMO 4</span><h3>Close the loop</h3></div>
-      <p class="teaches">Teaches: with both directions connected, the system drives itself, and geometry decides whether it lives or dies.</p>
-      <p>Now connect them. The flame pumps the sound; the sound drives the flame; the delay does the timing you were doing by hand. Nobody is choosing anything.</p>
+      <div class="demo-head"><span class="demo-num">DEMO 4</span><h3>Thermoacoustic instability</h3></div>
+      <p>This is the full loop. The gauze adds energy to the oscillations, the sound oscillates the air speed and causes the heat to oscillate with it by a delay. The delay is fixed. This is when the system becomes a self-sustaining feedback loop.</p>
       <div class="ph demo-ph">
         <span class="tag">Interactive placeholder</span>
-        <p class="what">Full loop running. Trace goes quiet &rarr; flickering &rarr; a single sustained tone. Flame visual pulses with heat release.</p>
-        <p class="knobs">CONTROLS &nbsp;·&nbsp; flame strength &nbsp;·&nbsp; chamber length &nbsp;·&nbsp; background noise</p>
       </div>
-      <p>Turn the flame strength up and past a threshold the trace blooms into a steady tone. But leave the strength alone and change the chamber length instead, and the same flame flips between roaring and silent, because the delay has moved the heat into or out of step with the pressure.</p>
+      <p>Try to set the gauze temperature and position it across the tube height and past a threshold the oscillations grow into a sustained tone or die away. Changing the length of the tube can also flip it, while also changing its natural frequency and period.</p>
 
       <details class="math">
-        <summary>The maths: all four mechanisms in one line</summary>
+        <summary>The mathematics behind it: all four mechanisms in one line</summary>
         <div class="body">
-          <p>Juniper &amp; Sujith reduce the whole system to a single equation. Every piece you just built is a term in it:</p>
           <div class="eq">ü&#8342; + &epsilon;(&xi;u&#8342;&sup2; &minus; &zeta;)u&#775;&#8342; + (k&pi;)&sup2;u&#8342; = &minus;2k&pi;&beta; u&#8342;(t &minus; &tau;)</div>
-          <p>(k&pi;)&sup2;u&#8342; is the resonator from Demo 1. &zeta; is the damping that made it fade. &beta;u&#8342;(t&minus;&tau;) is the delayed flame coupling from Demos 2 and 3. &xi;u&#8342;&sup2; is the saturation that stops the tone growing forever. [PLACEHOLDER: check symbol rendering and expand each term.]</p>
+          <p>(k&pi;)&sup2;u&#8342; is the resonator from Demo 1. &zeta; is the damping that made it fade. &beta;u&#8342;(t&minus;&tau;) is the delayed gauze coupling from Demos 2 and 3. &xi;u&#8342;&sup2; is the saturation that stops the tone growing forever.</p>
         </div>
       </details>
     </div>
@@ -354,17 +335,16 @@ footer{background:var(--soot);color:#7C828C;padding:40px 0;font-family:"IBM Plex
 <!-- ============ 3b. WHAT YOU JUST BUILT ============ -->
 <section>
   <div class="wrap">
-    <span class="eyebrow">04 — What you just built</span>
-    <h2>Four mechanisms, and nothing else</h2>
-    <p>Everything you have been turning on comes down to four pieces of physics. This is the whole model, not a summary of it.</p>
+    <span class="eyebrow">04</span>
+    <h2>The four mechanisms in play</h2>
+    <p>All the demos and the interactives are just 4 pieces of physics.</p>
     <ol class="mechs">
-      <li><strong>An acoustic resonator.</strong> The chamber has a natural frequency and can store acoustic energy, so there is something to excite. <span class="from">Demo 1</span></li>
-      <li><strong>Damping.</strong> Energy leaks out. This is what makes a disturbance ring down, and it sets the threshold the flame has to beat. <span class="from">Demo 1</span></li>
-      <li><strong>An unsteady heat source coupled to the acoustic field.</strong> Heat drives the pressure wave, and the pressure wave feeds back and changes the heat. It has to go both ways. <span class="from">Demos 2 &amp; 3</span></li>
-      <li><strong>A time delay in that response.</strong> The flame answers the sound from a moment ago, and that lag decides where its energy lands in the cycle. <span class="from">Demos 3 &amp; 4</span></li>
+      <li><strong>Resonator:</strong> Allows sound to reflect back, causing waves to travel up and down at natural frequencies. <span class="from">Demo 1</span></li>
+      <li><strong>Damping:</strong> Causes energy to leak, which makes disturbances ring down, like in demo 1. Sets a threshold the gauze has to surpass. <span class="from">Demo 1</span></li>
+      <li><strong>An unsteady heat source coupling to the acoustic field:</strong> Heat release adds acoustic energy, and the acoustic wave feeds back and changes the heat. <span class="from">Demos 2 &amp; 3</span></li>
+      <li><strong>Time delay:</strong> The gauze responds to the sound from a moment ago, not instantly. The lag decides whether pressure aligns with the gauze’s heat release. If the heat arrives when pressure is high, it grows the oscillation; heat arriving when pressure is low kills it. <span class="from">Demos 3 &amp; 4</span></li>
     </ol>
-    <p>A real combustor has far more than this: mean flow, an inlet and an outlet, many acoustic modes at once, steep temperature gradients, and the actual chemistry of burning. None of it is needed to produce the behaviour on this page, so none of it is here.</p>
-    <p>[PLACEHOLDER: decide whether this section reads better here, after the demos, or before Demo 1 as an up-front contract with the reader.]</p>
+    <p>It is apparent that a real rocket has many more components than this, such as an inlet and an outlet, many acoustic modes at once, and the actual chemistry of burning. However, none of them are absolutely necessary to create thermoacoustic instability so they are not included in this page.</p>
   </div>
 </section>
 
@@ -373,11 +353,12 @@ footer{background:var(--soot);color:#7C828C;padding:40px 0;font-family:"IBM Plex
 <!-- ============ 5. THE ANSWER ============ -->
 <section>
   <div class="wrap">
-    <span class="eyebrow">05 — Back to the engine</span>
-    <h2>Why the baffles worked</h2>
-    <p>[PLACEHOLDER: return to the F-1 with the loop now built. The chamber was a resonator. The turbulent flame was an unsteady heat source coupled to it. The travel time of the disturbance set a delay. Above a threshold, the loop closed on itself.]</p>
-    <p>[PLACEHOLDER: the fix. The baffles did not strengthen anything. They divided the chamber so the acoustic modes that were coupling to the flame could not form. Rocketdyne changed the geometry, not the structure. Tie back to the chamber-length knob in Demo 4: geometry is the lever.]</p>
-    <p>[PLACEHOLDER: note that the driving mechanism is only around 0.1% efficient at turning heat into sound, and that it only builds into something destructive because acoustic damping in these engines is so low. Cite Juniper &amp; Sujith §1.]</p>
+    <span class="eyebrow">05</span>
+    <h2>The solution</h2>
+    <p>For the F-1 engine, the resonator was the combustion chamber, the turbulent flame acted as the unsteady heat source, the propellant travel and mixing were the time delay, and the chamber walls and nozzle were where the energy escaped, but they both leaked very little acoustic energy.</p>
+    <p>In the rocket, converting heat to sound was very inefficient, but there was so little damping that the little amount of sound produced by the engine stayed and built up to a destructive amplitude of pressure oscillations.</p>
+    <p>The fix engineers ultimately implemented altered the first mechanism of thermoacoustic instability: resonance. They did this by separating the chamber using baffles which affected the resonance the flame was coupling to.</p>
+    <p>You can see how the baffles changing geometry of the engine affect the instability by changing the tube length in demo 4; it changes the natural frequency which makes the fixed delay land somewhere else in the cycle, causing the delay to form or kill oscillations.</p>
   </div>
 </section>
 
@@ -386,11 +367,11 @@ footer{background:var(--soot);color:#7C828C;padding:40px 0;font-family:"IBM Plex
 <!-- ============ 5. COMPLEX SYSTEM ============ -->
 <section class="dark">
   <div class="wrap">
-    <span class="eyebrow on-dark">06 — Why this is a complex system</span>
-    <h2>Order out of chaos</h2>
-    <p>Look back at what you built. Demo 1 was a spring that fades. Demo 2 was pushing a swing. Demo 3 was a delayed response. Not one of them is complicated, and you could predict what each would do before you touched it.</p>
-    <p>The threshold, the flickering, and the self-sustained tone appear nowhere in those three. They only exist once the loop is closed. That is what a complex system means: collective behaviour you cannot work out by studying the parts one at a time.</p>
-    <p>Inside a real combustor, the flame is turbulent, churning, disordered, noisy. And out of that disorder the system organises itself into a single coherent tone. Juniper and Sujith describe it as order emerging from chaos.</p>
+    <span class="eyebrow on-dark">06</span>
+    <h2>Why this is a complex system</h2>
+    <p>The first three demos are predictable. You do an action, such as pulsing the gauze, and when you stop, it stops. Then when the loop closes in demo four, the output becomes the input, and there is a threshold: below it disturbances die out, above it they grow. The threshold does not appear until all four mechanisms are connected.</p>
+    <p>This is what a complex system means: an emergent property that cannot be predicted by analyzing its parts.</p>
+    <p>The rocket was much larger than the Rijke tube and had a different heat source, different cause of delay, and different geometry, yet they both had the same behavior since they had all four mechanisms intact.</p>
   </div>
   <div class="wide">
     <div class="ph dark-ph">
@@ -405,19 +386,12 @@ footer{background:var(--soot);color:#7C828C;padding:40px 0;font-family:"IBM Plex
   <div class="wrap">
     <span class="eyebrow">References</span>
     <ul class="refs">
-      <li>Rayleigh, J. W. S. (1878). The explanation of certain acoustical phenomena. <em>Nature</em> 18, 319&ndash;321.</li>
-      <li>Oefelein, J. C. &amp; Yang, V. (1993). Comprehensive review of liquid-propellant combustion instabilities in F-1 engines. <em>J. Propulsion and Power</em> 9(5), 657&ndash;677.</li>
-      <li>Lieuwen, T. C. (2002). Experimental investigation of limit-cycle oscillations in an unstable gas turbine combustor. <em>J. Propulsion and Power</em> 18(1), 61&ndash;67.</li>
-      <li>Balasubramanian, K. &amp; Sujith, R. I. (2008). Thermoacoustic instability in a Rijke tube: non-normality and nonlinearity. <em>Physics of Fluids</em> 20(4), 044103.</li>
-      <li>Juniper, M. P. &amp; Sujith, R. I. (2018). Sensitivity and nonlinearity of thermoacoustic oscillations. <em>Annu. Rev. Fluid Mech.</em> 50, 661&ndash;689.</li>
-      <li>Poinsot, T. (2017). Prediction and control of combustion instabilities in real engines. <em>Proc. Combustion Institute</em> 36(1), 1&ndash;28.</li>
+      <li>Bilstein, R. E. (1980). <em>Stages to Saturn: A Technological History of the Apollo/Saturn Launch Vehicles</em>. NASA SP-4206. Washington, DC: National Aeronautics and Space Administration. NTRS document ID 19970009949.</li>
+      <li>Juniper, M. P., &amp; Sujith, R. I. (2018). Sensitivity and nonlinearity of thermoacoustic oscillations. <em>Annual Review of Fluid Mechanics</em>, 50, 661–689.</li>
+      <li>Manoj, K., Pawar, S. A., Kurths, J., &amp; Sujith, R. I. (2022). Rijke tube: A nonlinear oscillator. <em>Chaos</em>, 32(7), 072101. https://doi.org/10.1063/5.0091826</li>
     </ul>
   </div>
 </section>
-
-<footer>
-  <div class="wrap">MOCK-UP · DEMO 1 LIVE · REMAINING INTERACTIVES AND IMAGES NOT YET PLACED</div>
-</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
 <script src="sketch.js"></script>
